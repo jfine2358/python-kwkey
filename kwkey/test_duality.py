@@ -1,13 +1,13 @@
 '''>>> name_dict = make_name_dict('A')
 
 >>> name_dict['get']
-('_A_get__', '__get__')
+('_A_getitem__', '__getitem__')
 
 >>> name_dict['set']
-('_A_set__', '__set__')
+('_A_setitem__', '__setitem__')
 
 >>> name_dict['del']
-('_A_del__', '__del__')
+('_A_delitem__', '__delitem__')
 
 
 
@@ -37,7 +37,30 @@ AttributeError: 'X' object has no attribute 'ccc'
 >>> getattr_loop(x, ('ccc', 'aaa'))
 1
 
+
+>>> a = A(2)
+>>> a['abcdef']
+'c'
+
+>>> A(2)['abcdef']
+'c'
+
+>>> A(slice(2, 5))['abcdef']
+'cde'
+
+>>> d = dict()
+>>> A('abc')[d] = 5
+
+>>> A('abc')[d]
+5
+
+>>> d
+{'abc': 5}
+
+
+
 '''
 
 from .duality import make_name_dict
 from .duality import getattr_loop
+from .duality import A
