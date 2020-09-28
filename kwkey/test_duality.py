@@ -100,14 +100,43 @@ Some odds and ends.
 >>> d
 {'abc': 5}
 
+Class B give the D'Aprano and van Rossum semantics.
+
+The next two give the SAME result.
+>>> B()[log]
+log: getitem(*((),), **{})
+
+>>> B(())[log]
+log: getitem(*((),), **{})
+
+The next two give DIFFERENT results.
+>>> B(1)[log]
+log: getitem(*(1,), **{})
+
+>>> B((1,))[log]
+log: getitem(*((1,),), **{})
+
+The next two give the SAME result.
+
+>>> B(1, 2)[log]
+log: getitem(*((1, 2),), **{})
+
+>>> B((1, 2))[log]
+log: getitem(*((1, 2),), **{})
+
+The next two give the SAME result.
+>>> B(1, 2, a=3, b=4)[log]
+log: getitem(*((1, 2),), **{'a': 3, 'b': 4})
+
+>>> B((1, 2), a=3, b=4)[log]
+log: getitem(*((1, 2),), **{'a': 3, 'b': 4})
+
 '''
 
 from .duality import make_name_dict
 from .duality import lookup_loop
 from .duality import A
-
-
-
+from .duality import B
 
 
 class Log:

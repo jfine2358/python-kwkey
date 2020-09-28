@@ -83,6 +83,31 @@ class DualityBase:
         return method(other, *argv, **kwargs)
 
 
+def present_keyfn(argv, kwargs):
+
+    # Check for bad input.
+    if type(argv) is not tuple:
+        raise ValueError
+
+    if type(kwargs) is not dict:
+        raise ValueError
+
+    if kwargs:
+        raise ValueError
+
+    if len(argv) == 0:
+        raise ValueError
+
+    if len(argv) == 1:
+        # If a single arg in argv, it's the key.
+        key = argv[0]
+    else:
+        # Otherwise it's the whole of argv.
+        key = argv
+
+    return key
+
+
 class A(DualityBase):
     '''The present semantics.
     '''
@@ -96,28 +121,46 @@ class A(DualityBase):
         'del': ('__delitem__',),
     }
 
-    # TODO: Perhaps move arg checking to init.
-    # TODO: Perhaps check via __keyfn__.
     @staticmethod
     def make_del_get_args(argv, kwargs):
-        if kwargs:
-            raise ValueError
 
-        argv = tuple(argv)
-
-        if len(argv) == 1:
-            return (argv[0],), {}
-        else:
-            return (argv,), {}
-
+        key = present_keyfn(argv, kwargs)
+        return (key,), {}
 
     @staticmethod
     def make_set_args(val, argv, kwargs):
-        if kwargs:
+
+        key = present_keyfn(argv, kwargs)
+        return (key, val), {}
+
+
+class B(DualityBase):
+    '''The D'Aprano and van Rossum semantics.
+    '''
+
+    # For 'get' try first '_B_getitem__', then '__getitem__'. And
+    # similarly for 'get' and 'set'.
+    name_dict = make_name_dict('B')
+
+
+    @staticmethod
+    def make_del_get_args(argv, kwargs):
+
+        if type(argv) is not tuple:
             raise ValueError
 
-        argv = tuple(argv)
-        if len(argv) == 1:
-            return (argv[0], val), {}
+        if type(kwargs) is not dict:
+            raise ValueError
+
+        if len(argv) == 0:
+            key = ()
         else:
-            return (argv, val), {}
+            key = present_keyfn(argv, {})
+
+        return (key,), kwargs
+
+    @staticmethod
+    def make_set_args(val, argv, kwargs):
+
+        key, kwargs = make_del_get_args(argv, kwargs)
+        return (key, val), kwargs
