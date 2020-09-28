@@ -13,7 +13,7 @@ def make_name_dict(char):
     }
 
 
-def getattr_loop(obj, names):
+def lookup_loop(obj, names):
 
     sentinel = object()
 
@@ -38,21 +38,34 @@ class DualityBase:
         self.kwargs = kwargs
 
 
-    def get_method(self, other, name):
+    def look_up_method(self, other, name):
 
         cls = type(other)
         names = self.name_dict[name]
-        method = getattr_loop(cls, names)
+        method = lookup_loop(cls, names)
 
         return method
+
+
+    def __delitem__(self, other):
+
+        # We need to call a method.
+        method = self.look_up_method(other, 'del')
+
+        # We need arguments for the method.
+        argv, kwargs = self.make_del_get_args(self.argv, self.kwargs)
+
+        # Call the method, with other as self.
+        return method(other, *argv, **kwargs)
+
 
     def __getitem__(self, other):
 
         # We need to call a method.
-        method = self.get_method(other, 'get')
+        method = self.look_up_method(other, 'get')
 
         # We need arguments for the method.
-        argv, kwargs = self.call_get(self.argv, self.kwargs)
+        argv, kwargs = self.make_del_get_args(self.argv, self.kwargs)
 
         # Call the method, with other as self.
         return method(other, *argv, **kwargs)
@@ -61,10 +74,10 @@ class DualityBase:
     def __setitem__(self, other, val):
 
         # We need to call a method.
-        method = self.get_method(other, 'set')
+        method = self.look_up_method(other, 'set')
 
         # We need arguments for the method.
-        argv, kwargs = self.call_set(val, self.argv, self.kwargs)
+        argv, kwargs = self.make_set_args(val, self.argv, self.kwargs)
 
         # Call the method, with other as self.
         return method(other, *argv, **kwargs)
@@ -72,16 +85,21 @@ class DualityBase:
 
 class A(DualityBase):
     '''The present semantics.
-
     '''
 
-    name_dict = make_name_dict('A')
-
+    # Lookup table for item methods. The keys are 'get', 'set', and
+    # 'del'. For each key, the corresponding value is the names to
+    # lookup, as a tuple.
+    name_dict = {
+        'get': ('__getitem__',),
+        'set': ('__setitem__',),
+        'del': ('__delitem__',),
+    }
 
     # TODO: Move arg checking to init.
     # TODO: Perhaps check via __keyfn__.
     @staticmethod
-    def call_get(argv, kwargs):
+    def make_del_get_args(argv, kwargs):
         if kwargs:
             raise ValueError
 
@@ -94,7 +112,7 @@ class A(DualityBase):
 
 
     @staticmethod
-    def call_set(val, argv, kwargs):
+    def make_set_args(val, argv, kwargs):
         if kwargs:
             raise ValueError
 
