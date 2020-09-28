@@ -96,7 +96,7 @@ class A(DualityBase):
         'del': ('__delitem__',),
     }
 
-    # TODO: Move arg checking to init.
+    # TODO: Perhaps move arg checking to init.
     # TODO: Perhaps check via __keyfn__.
     @staticmethod
     def make_del_get_args(argv, kwargs):

@@ -38,28 +38,56 @@ AttributeError: 'X' object has no attribute 'ccc'
 1
 
 
+A logging object for use in the doctests below.
 >>> log = Log()
 
+The usual way of calling getitem.
 >>> log[2]
 log: getitem(*(2,), **{})
 
+The dual way of calling getitem, via class A.
 >>> A(2)[log]
 log: getitem(*(2,), **{})
 
+Retrieving an item, via A.
 >>> A(2)['abcdef']
 'c'
 
 >>> log[()]
 log: getitem(*((),), **{})
 
+The usual way of calling setitem.
 >>> log['key'] = 'val'
 log: setitem(*('key', 'val'), **{})
 
+The dual way of calling setitem.
 >>> A('key')[log] = 'val'
 log: setitem(*('key', 'val'), **{})
 
+The usual way of calling delitem.
+>>> del log['key']
+log: delitem(*('key',), **{})
+
+The dual way of calling delitem.
+>>> del A('key')[log]
+log: delitem(*('key',), **{})
 
 
+The next 4 lines all give the same call to getitem.
+>>> log[1, 2]
+log: getitem(*((1, 2),), **{})
+
+>>> log[(1, 2)]
+log: getitem(*((1, 2),), **{})
+
+>>> A(1, 2)[log]
+log: getitem(*((1, 2),), **{})
+
+>>> A((1, 2))[log]
+log: getitem(*((1, 2),), **{})
+
+
+Some odds and ends.
 >>> A(slice(2, 5))['abcdef']
 'cde'
 
@@ -71,12 +99,6 @@ log: setitem(*('key', 'val'), **{})
 
 >>> d
 {'abc': 5}
-
-
->>> log = Log()
-
->>> log[1, 2, 'a']
-log: getitem(*((1, 2, 'a'),), **{})
 
 '''
 
@@ -98,7 +120,6 @@ class Log:
 
     def __delitem__(self, *argv, **kwargs):
         self._log('delitem', argv, kwargs)
-        print(f'del: {key!r}')
 
     def __setitem__(self, *argv, **kwargs):
         self._log('setitem', argv, kwargs)
