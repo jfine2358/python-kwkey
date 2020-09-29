@@ -100,7 +100,10 @@ Some odds and ends.
 >>> d
 {'abc': 5}
 
-Class B give the D'Aprano and van Rossum semantics.
+The D'Aprano and van Rossum semantics
+=====================================
+
+Class B gives the D'Aprano and van Rossum semantics.
 
 The next two give the SAME result.
 >>> B()[log]
@@ -131,12 +134,119 @@ log: getitem(*((1, 2),), **{'a': 3, 'b': 4})
 >>> B((1, 2), a=3, b=4)[log]
 log: getitem(*((1, 2),), **{'a': 3, 'b': 4})
 
+
+The Fine semantics
+==================
+
+Class C gives the Fine semantics. The behaviour depends on the value
+of getattr(type(obj), '__keyfn__', True).
+
+If the value is True, we get the current dict semantics.
+>>> getattr(type(log), '__keyfn__', True)
+True
+
+>>> C()[log]
+Traceback (most recent call last):
+ValueError
+
+>>> C(1)[log]
+log: getitem(*(1,), **{})
+
+The next two give the SAME result.
+>>> C(1, 2)[log]
+log: getitem(*((1, 2),), **{})
+
+>>> C((1, 2))[log]
+log: getitem(*((1, 2),), **{})
+
+>>> C((1, 2))[log] = 'val'
+log: setitem(*((1, 2), 'val'), **{})
+
+If the value is None, we get function call semantics.
+>>> class NoKeyfn(Log):
+...    __keyfn__ = None
+
+>>> nokey = NoKeyfn()
+>>> getattr(type(nokey), '__keyfn__', True) is None
+True
+
+
+>>> C()[nokey]
+log: getitem(*(), **{})
+
+>>> C(1)[nokey]
+log: getitem(*(1,), **{})
+
+The next two give the DIFFERENT results.
+>>> C(1, 2)[nokey]
+log: getitem(*(1, 2), **{})
+
+>>> C((1, 2))[nokey]
+log: getitem(*((1, 2),), **{})
+
+>>> C(1, 2, a=1, b=2)[nokey]
+log: getitem(*(1, 2), **{'a': 1, 'b': 2})
+
+The previous getitem call is equivalent to
+#    getitem(1, 2, a=1, b=2)
+
+For setitem, the value to be assigned comes FIRST.
+>>> C(1, 2, a=1, b=2)[nokey] = 'val'
+log: setitem(*('val', 1, 2), **{'a': 1, 'b': 2})
+
+The previous setitem call is equivalent to
+#    setitem('val' 1, 2, a=1, b=2)
+
+Here the corner case of no arguments.
+>>> C()[nokey] = 'val'
+log: setitem(*('val',), **{})
+
+
+We can supply our own keyfn. Here we use the K class, introduced in
+v0.0.1 of this package.
+
+>>> class K_Log(Log):
+...     @staticmethod
+...     def __keyfn__(argv, kwargs):
+...         return K(*argv, **kwargs)
+
+>>> k_log = K_Log()
+
+The positional and keyword arguments are recorded in an instance of K.
+>>> C()[k_log]
+log: getitem(*(K(),), **{})
+
+>>> C(1)[k_log]
+log: getitem(*(K(1),), **{})
+
+>>> C(1, 2)[k_log]
+log: getitem(*(K(1, 2),), **{})
+
+>>> C((1, 2))[k_log]
+log: getitem(*(K((1, 2)),), **{})
+
+>>> C(1, 2, a=1, b=2)[k_log]
+log: getitem(*(K(1, 2, a=1, b=2),), **{})
+
+For setitem, the value comes after the 'val' to be assigned.
+>>> C(1, 2, a=1, b=2)[k_log] = 'val'
+log: setitem(*(K(1, 2, a=1, b=2), 'val'), **{})
+
+The previous setitem call is equivalent to
+#   setitem(K(1, 2, a=1, b=2), 'val')
+
+Here the corner case of no arguments.
+>>> C()[k_log] = 'val'
+log: setitem(*(K(), 'val'), **{})
+
 '''
 
 from .duality import make_name_dict
 from .duality import lookup_loop
 from .duality import A
 from .duality import B
+from .duality import C
+from . import K
 
 
 class Log:

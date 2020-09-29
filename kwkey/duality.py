@@ -27,62 +27,6 @@ def lookup_loop(obj, names):
     getattr(obj, name)
 
 
-
-class DualityBase:
-
-    name_dict = None            # Supplied by subclass.
-
-    def __init__(self, *argv, **kwargs):
-
-        self.argv = argv
-        self.kwargs = kwargs
-
-
-    def look_up_method(self, other, name):
-
-        cls = type(other)
-        names = self.name_dict[name]
-        method = lookup_loop(cls, names)
-
-        return method
-
-
-    def __delitem__(self, other):
-
-        # We need to call a method.
-        method = self.look_up_method(other, 'del')
-
-        # We need arguments for the method.
-        argv, kwargs = self.make_del_get_args(self.argv, self.kwargs)
-
-        # Call the method, with other as self.
-        return method(other, *argv, **kwargs)
-
-
-    def __getitem__(self, other):
-
-        # We need to call a method.
-        method = self.look_up_method(other, 'get')
-
-        # We need arguments for the method.
-        argv, kwargs = self.make_del_get_args(self.argv, self.kwargs)
-
-        # Call the method, with other as self.
-        return method(other, *argv, **kwargs)
-
-
-    def __setitem__(self, other, val):
-
-        # We need to call a method.
-        method = self.look_up_method(other, 'set')
-
-        # We need arguments for the method.
-        argv, kwargs = self.make_set_args(val, self.argv, self.kwargs)
-
-        # Call the method, with other as self.
-        return method(other, *argv, **kwargs)
-
-
 def present_keyfn(argv, kwargs):
 
     # Check for bad input.
@@ -108,6 +52,83 @@ def present_keyfn(argv, kwargs):
     return key
 
 
+class DualityBase:
+
+    name_dict = None            # Supplied by subclass.
+
+    def __init__(self, *argv, **kwargs):
+
+        self.argv = argv
+        self.kwargs = kwargs
+
+
+    def look_up_method(self, other, name):
+
+        cls = type(other)
+        names = self.name_dict[name]
+        method = lookup_loop(cls, names)
+
+        return method
+
+
+    @staticmethod
+    def look_up_keyfn(other):
+
+        keyfn = getattr(type(other), '__keyfn__', True)
+        if keyfn is True:
+            return present_keyfn
+        else:
+            return keyfn
+
+
+    def __delitem__(self, other):
+
+        # Find the keyfn.
+        keyfn = self.look_up_keyfn(other)
+
+        # We need to call a method.
+        method = self.look_up_method(other, 'del')
+
+        # We need arguments for the method.
+        argv, kwargs = self.make_del_get_args(keyfn, self.argv,
+                                              self.kwargs)
+
+        # Call the method, with other as self.
+        return method(other, *argv, **kwargs)
+
+
+    def __getitem__(self, other):
+
+        # Find the keyfn.
+        keyfn = self.look_up_keyfn(other)
+
+        # We need to call a method.
+        method = self.look_up_method(other, 'get')
+
+        # We need arguments for the method.
+        argv, kwargs = self.make_del_get_args(keyfn, self.argv,
+                                              self.kwargs)
+
+        # Call the method, with other as self.
+        return method(other, *argv, **kwargs)
+
+
+    def __setitem__(self, other, val):
+
+        # Find the keyfn.
+        keyfn = self.look_up_keyfn(other)
+
+        # We need to call a method.
+        method = self.look_up_method(other, 'set')
+
+        # We need arguments for the method.
+        argv, kwargs = self.make_set_args(keyfn, val, self.argv,
+                                          self.kwargs)
+
+        # Call the method, with other as self.
+        return method(other, *argv, **kwargs)
+
+
 class A(DualityBase):
     '''The present semantics.
     '''
@@ -122,13 +143,13 @@ class A(DualityBase):
     }
 
     @staticmethod
-    def make_del_get_args(argv, kwargs):
+    def make_del_get_args(keyfn, argv, kwargs):
 
         key = present_keyfn(argv, kwargs)
         return (key,), {}
 
     @staticmethod
-    def make_set_args(val, argv, kwargs):
+    def make_set_args(keyfn, val, argv, kwargs):
 
         key = present_keyfn(argv, kwargs)
         return (key, val), {}
@@ -144,7 +165,7 @@ class B(DualityBase):
 
 
     @staticmethod
-    def make_del_get_args(argv, kwargs):
+    def make_del_get_args(keyfn, argv, kwargs):
 
         if type(argv) is not tuple:
             raise ValueError
@@ -160,7 +181,35 @@ class B(DualityBase):
         return (key,), kwargs
 
     @staticmethod
-    def make_set_args(val, argv, kwargs):
+    def make_set_args(keyfn, val, argv, kwargs):
 
         key, kwargs = make_del_get_args(argv, kwargs)
         return (key, val), kwargs
+
+
+class C(DualityBase):
+    '''The Fine semantics.'''
+
+
+    # For 'get' try first '_C_getitem__', then '__getitem__'. And
+    # similarly for 'get' and 'set'.
+    name_dict = make_name_dict('C')
+
+    @staticmethod
+    def make_del_get_args(keyfn, argv, kwargs):
+
+        if keyfn is None:
+            return argv, kwargs
+        else:
+            key = keyfn(argv, kwargs)
+            return (key,), {}
+
+
+    @staticmethod
+    def make_set_args(keyfn, val, argv, kwargs):
+
+        if keyfn is None:
+            return (val,) + argv, kwargs
+        else:
+            key = keyfn(argv, kwargs)
+            return (key, val), {}
