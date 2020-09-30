@@ -184,8 +184,14 @@ The next two give the DIFFERENT results.
 >>> C(1, 2)[nokey]
 log: getitem(*(1, 2), **{})
 
+The previous getitem call is equivalent to
+#    getitem(1, 2)
+
 >>> C((1, 2))[nokey]
 log: getitem(*((1, 2),), **{})
+
+The previous getitem call is equivalent to
+#    getitem((1, 2))
 
 >>> C(1, 2, a=3, b=4)[nokey]
 log: getitem(*(1, 2), **{'a': 3, 'b': 4})

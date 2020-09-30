@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="kwkey",
-    version="0.0.1",
+    version="0.0.2",
     author="Jonathan Fine",
     author_email="jfine2358@gmail.com",
     description="Indexing with keyword arguments",
