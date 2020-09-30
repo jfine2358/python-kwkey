@@ -59,7 +59,6 @@ duality. Roughly speaking, duality is writing `key[items]` instead of
 
 ```python
 >>> from operator import itemgetter
-TypeError: 'operator.itemgetter' object is not subscriptable
 >>> itemgetter(3)('abcde')
 'd'
 ```
@@ -111,7 +110,7 @@ A((1, 2))[log] = 'val'
 log.__setitem__((1, 2), 'val')
 ```
 
-### Class `B` - the semantics proposed by D'Aprano and von Rossum
+### Class `B` - the semantics proposed by D'Aprano and van Rossum
 
 ```python
 >>> B(1, 2, a=3, b=4)[log]
