@@ -187,18 +187,18 @@ log: getitem(*(1, 2), **{})
 >>> C((1, 2))[nokey]
 log: getitem(*((1, 2),), **{})
 
->>> C(1, 2, a=1, b=2)[nokey]
-log: getitem(*(1, 2), **{'a': 1, 'b': 2})
+>>> C(1, 2, a=3, b=4)[nokey]
+log: getitem(*(1, 2), **{'a': 3, 'b': 4})
 
 The previous getitem call is equivalent to
-#    getitem(1, 2, a=1, b=2)
+#    getitem(1, 2, a=3, b=4)
 
 For setitem, the value to be assigned comes FIRST.
->>> C(1, 2, a=1, b=2)[nokey] = 'val'
-log: setitem(*('val', 1, 2), **{'a': 1, 'b': 2})
+>>> C(1, 2, a=3, b=4)[nokey] = 'val'
+log: setitem(*('val', 1, 2), **{'a': 3, 'b': 4})
 
 The previous setitem call is equivalent to
-#    setitem('val' 1, 2, a=1, b=2)
+#    setitem('val' 1, 2, a=3, b=4)
 
 Here the corner case of no arguments.
 >>> C()[nokey] = 'val'
