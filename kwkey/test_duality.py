@@ -86,6 +86,9 @@ log: getitem(*((1, 2),), **{})
 >>> A((1, 2))[log]
 log: getitem(*((1, 2),), **{})
 
+>>> A((1, 2))[log] = 'val'
+log: setitem(*((1, 2), 'val'), **{})
+
 
 Some odds and ends.
 >>> A(slice(2, 5))['abcdef']
